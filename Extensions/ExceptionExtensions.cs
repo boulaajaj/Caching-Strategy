@@ -1,0 +1,37 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Amibou.Infrastructure.Extensions
+{
+    /// <summary>
+    /// Extensions to <see cref="Exception"/>
+    /// </summary>
+    public static class ExceptionExtensions
+    {
+        /// <summary>
+        /// Returns the nested Message values from the full exception stack
+        /// </summary>
+        /// <param name="exception"></param>
+        /// <returns></returns>
+        public static string FullMessage(this Exception exception) => exception.FullMessage(Environment.NewLine);
+
+        /// <summary>
+        /// Returns the nested Message values from the full exception stack
+        /// </summary>
+        /// <param name="exception"></param>
+        /// <param name="separator"></param>
+        /// <returns></returns>
+        public static string FullMessage(this Exception exception, string separator)
+        {
+            var builder = new StringBuilder();
+            while (exception != null)
+            {
+                builder.AppendFormat("{0}{1}", exception.Message, separator);
+                exception = exception.InnerException;
+            }
+            return builder.ToString();
+        }
+    }
+}
