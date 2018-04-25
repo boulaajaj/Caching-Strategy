@@ -1,6 +1,4 @@
 ﻿using Amibou.Infrastructure.Caching.Caches;
-using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Logging;
 using Amibou.Infrastructure.Serialization;
 using System;
 using System.Web.Caching;
@@ -21,11 +19,10 @@ namespace Amibou.Infrastructure.Caching
                 //{
                 //    return _nullCache;
                 //}
-                if (!_initialised)
-                {
-                    Initialise();
-                    _initialised = true;
-                }
+                if (_initialised) return this;
+
+                Initialise();
+                _initialised = true;
                 return this;
             }
         }

@@ -1,6 +1,5 @@
-﻿using System;
-using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Logging;
+﻿using Amibou.Infrastructure.Configuration;
+using System;
 using sys = System.Runtime.Caching;
 
 

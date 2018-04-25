@@ -1,7 +1,5 @@
 ﻿
 using System.Configuration;
-using Amibou.Infrastructure;
-using Amibou.Infrastructure.Serialization;
 
 namespace Amibou.Infrastructure.Configuration
 {

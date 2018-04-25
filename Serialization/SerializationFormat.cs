@@ -1,7 +1,4 @@
-﻿
-using System.Runtime.Serialization;
-
-namespace Amibou.Infrastructure.Serialization
+﻿namespace Amibou.Infrastructure.Serialization
 {
     public enum SerializationFormat
     {

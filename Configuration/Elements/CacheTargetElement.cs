@@ -1,10 +1,6 @@
-﻿
-using System.Collections.Generic;
-using System.Configuration;
-using Amibou.Infrastructure;
-using Amibou.Infrastructure.Caching;
+﻿using Amibou.Infrastructure.Caching;
 using Amibou.Infrastructure.Serialization;
-using sys = System;
+using System.Configuration;
 
 namespace Amibou.Infrastructure.Configuration
 {

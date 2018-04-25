@@ -10,6 +10,7 @@ namespace Amibou.Infrastructure.Caching.Caches
     /// </remarks>
     public  class NullCache : CacheBase
     {
+
         public override CacheType CacheType => CacheType.Null;
 
         protected override void InitialiseInternal() { }

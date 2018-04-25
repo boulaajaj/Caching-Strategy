@@ -1,8 +1,6 @@
-using System.Configuration;
-using Amibou.Infrastructure.Logging;
-using Amibou.Infrastructure;
-using Amibou.Infrastructure.Serialization;
 using Amibou.Infrastructure.Caching;
+using Amibou.Infrastructure.Serialization;
+using System.Configuration;
 
 namespace Amibou.Infrastructure.Configuration
 {

@@ -1,7 +1,7 @@
 ﻿using Amibou.Infrastructure.Configuration;
 using Amibou.Infrastructure.Cryptography;
-using Amibou.Infrastructure.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,34 +13,34 @@ namespace Amibou.Infrastructure.Caching.Caches
         private string _directory;
         private bool _directoryValid = true;
         private bool _initialised;
+        private List<string> _allKeys;
 
         public override CacheType CacheType => CacheType.Disk;
 
         protected override void InitialiseInternal()
         {
-            if (!_initialised)
+            if (_initialised) return;
+
+            _directory = CacheConfiguration.Current.DiskCache.Path;
+            //Log.Debug("DiskCache.Initialise - initialising with path: {0}", _directory);
+            try
             {
-                _directory = CacheConfiguration.Current.DiskCache.Path;
-                //Log.Debug("DiskCache.Initialise - initialising with path: {0}", _directory);
-                try
-                {
-                    if (!Directory.Exists(_directory))
-                    {
-                        _directoryValid = false;
-                        //Log.Error("DiskCache - directory specified in diskCache.path config: {0} does not exist. Not caching.", _directory);
-                    }
-                    else if (HasExceededQuota())
-                    {
-                        //Log.Warn("DiskCache - exceeded quota for directory specified in diskCache.path config: {0}. Not caching.", _directory);
-                    }
-                }
-                catch (Exception ex)
+                if (!Directory.Exists(_directory))
                 {
                     _directoryValid = false;
-                    //Log.Error("DiskCache - error checking diskCache.path config: {0}, message: {1}. Not caching.", _directory, ex);
+                    //Log.Error("DiskCache - directory specified in diskCache.path config: {0} does not exist. Not caching.", _directory);
                 }
-                _initialised = true;
+                else if (HasExceededQuota())
+                {
+                    //Log.Warn("DiskCache - exceeded quota for directory specified in diskCache.path config: {0}. Not caching.", _directory);
+                }
             }
+            catch (Exception ex)
+            {
+                _directoryValid = false;
+                //Log.Error("DiskCache - error checking diskCache.path config: {0}, message: {1}. Not caching.", _directory, ex);
+            }
+            _initialised = true;
         }
 
         protected override void SetInternal(string key, object value)
@@ -164,13 +164,13 @@ namespace Amibou.Infrastructure.Caching.Caches
 
         protected override void ResetInternal()
         {
-            var di = new DirectoryInfo(_directory);
+            var root = new DirectoryInfo(_directory);
 
-            foreach (FileInfo file in di.GetFiles())
+            foreach (var file in root.EnumerateFiles())
             {
                 file.Delete();
             }
-            foreach (DirectoryInfo dir in di.GetDirectories())
+            foreach (var dir in root.EnumerateDirectories())
             {
                 dir.Delete(true);
             }

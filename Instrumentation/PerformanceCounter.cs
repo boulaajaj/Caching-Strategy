@@ -1,8 +1,4 @@
-﻿using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Extensions;
-using Amibou.Infrastructure.Instrumentation.PerformanceCounters;
-using Amibou.Infrastructure.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using diag = System.Diagnostics;
@@ -60,7 +56,7 @@ namespace Amibou.Infrastructure.Instrumentation
             {
                 if (!PerformanceCounterCategory.Exists(category.Name))
                 {
-                    CounterCreationDataCollection counterCollection = new CounterCreationDataCollection();
+                    var counterCollection = new CounterCreationDataCollection();
                     foreach (var description in category.Counters)
                     {
                         var counter = new CounterCreationData();

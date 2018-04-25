@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Amibou.Infrastructure.Caching;
+using Amibou.Infrastructure.Serialization;
+using Microsoft.Practices.Unity;
+using Microsoft.Practices.Unity.Configuration;
+using Microsoft.Practices.Unity.InterceptionExtension;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Reflection;
-using Amibou.Infrastructure.Logging;
-using Microsoft.Practices.Unity;
-using Microsoft.Practices.Unity.Configuration;
-using Microsoft.Practices.Unity.InterceptionExtension;
-using Amibou.Infrastructure.Serialization;
-using Amibou.Infrastructure.Caching;
 using unity = Microsoft.Practices.Unity;
 
 namespace Amibou.Infrastructure.Containers

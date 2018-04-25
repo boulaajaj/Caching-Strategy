@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Amibou.Infrastructure.Caching;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Amibou.Infrastructure.Caching;
 
 
 namespace Amibou.Infrastructure.Utilities

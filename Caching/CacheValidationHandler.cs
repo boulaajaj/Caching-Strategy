@@ -1,12 +1,8 @@
 ﻿using Microsoft.Practices.Unity.InterceptionExtension;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data.Common;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 
 namespace Amibou.Infrastructure.Caching
@@ -22,25 +18,36 @@ namespace Amibou.Infrastructure.Caching
             get
             {
                 if (_validationCache != null) return _validationCache;
-                
-                //using Memcached - it is an independent process and easily available
-                _validationCache = Cache.Get(CacheType.Memcached); 
+
+                //using Memcached - it's an independent process and available
+                _validationCache = Cache.Get(CacheType.Memcached);
 
                 return _validationCache;
             }
         }
 
         /// <summary>
-        /// Checks if a list of types or a list of types with a specifc proprety have been marked as stale
+        /// extracts types from a list and/or types with a specifc proprety and parameter
+        /// value from the entityChangeTrackingDictionary and then generates a unique
+        /// validationToken before adding it to the cache dependency watch list; which
+        /// will refresh stale cache as needed
         /// </summary>
         /// <param name="method"></param>
         /// <param name="entityChangeTrackingDictionary"></param>
+        /// <param name="cacheDependencyKey"></param>
+        /// <param name="cacheType"></param>
         /// <returns>'false' if current cache is valid, 'true' if cache is stale</returns>
-        public static bool IsStale(IMethodInvocation method,
-            Dictionary<Type, KeyValuePair<string, string>> entityChangeTrackingDictionary)
+        public static void SetupChangeTracking(IMethodInvocation method,
+            Dictionary<Type, KeyValuePair<string, string>> entityChangeTrackingDictionary,
+            string cacheDependencyKey,
+            CacheType cacheType)
         {
-            if (entityChangeTrackingDictionary == null || entityChangeTrackingDictionary.Count == 0)
-                return false;
+            if (string.IsNullOrWhiteSpace(cacheDependencyKey))
+                return; //need to log this so we know this weirdness
+
+            if (entityChangeTrackingDictionary == null ||
+                entityChangeTrackingDictionary.Count == 0)
+                return;
 
             var entityList = entityChangeTrackingDictionary.Keys.ToList();
 
@@ -49,96 +56,143 @@ namespace Amibou.Infrastructure.Caching
                 KeyValuePair<string, string> propertyParameterPair;
                 var validationToken = $"{entity.FullName}";
 
-                if (!entityChangeTrackingDictionary.TryGetValue(entity, out propertyParameterPair))
-                    return ValidationCache.Exists(validationToken);
+                entityChangeTrackingDictionary.TryGetValue(entity, out propertyParameterPair);
 
-                if (propertyParameterPair.Key == null) return ValidationCache.Exists(validationToken);
+                if (propertyParameterPair.Key == null)
+                {
+                    AddToCacheDependencyList(validationToken, cacheDependencyKey, cacheType);
+                    continue;
+                }
 
                 var propertyName = propertyParameterPair.Key;
                 var parameterExpression = propertyParameterPair.Value.Split('.');
                 var inputIndex = method.Inputs.GetParameterInfo(parameterExpression[0]).Position;
                 var methodInputTargetValue = method.Inputs[inputIndex];
 
-                if (parameterExpression.Length > 1)
-                {
-                    for (var i = 1; i < parameterExpression.Length; i++)
-                    {
-                        if (methodInputTargetValue == null) break;
+                methodInputTargetValue = GetValueFromExpressionArray(parameterExpression, methodInputTargetValue);
 
-                        methodInputTargetValue = methodInputTargetValue
-                                .GetType()
-                                .GetProperty(parameterExpression[i])
-                                ?.GetValue(methodInputTargetValue);
-                    }
+                if (methodInputTargetValue == null 
+                    || string.IsNullOrWhiteSpace(methodInputTargetValue.ToString()))
+                {
+                    AddToCacheDependencyList(validationToken, cacheDependencyKey, cacheType);
+                    continue;
                 }
+
                 var typeProperty = entity.GetProperty(propertyName);
 
-                if (methodInputTargetValue == null || 
-                    string.IsNullOrWhiteSpace(methodInputTargetValue.ToString()) ||
-                    typeProperty == null) 
-                    return ValidationCache.Exists(validationToken);
+                if (typeProperty == null)
+                {
+                    AddToCacheDependencyList(validationToken, cacheDependencyKey, cacheType);
+                    continue;
+                }
 
                 validationToken +=
                         $"{PropertyDelimiter}{typeProperty.Name}" +
                         $"{ValueDelimiter}{methodInputTargetValue}";
 
-                return ValidationCache.Exists(validationToken);
+                AddToCacheDependencyList(validationToken, cacheDependencyKey, cacheType);
             }
-            return false;
         }
 
         /// <summary>
-        /// From a lamda expression, this exposes the type, property and its value, then
-        /// inserts a concatinated validation token to mark all related cache items for refresh
+        /// From a lamda expression, this exposes the type, property and its value,
+        /// with which a validation token is generated; which is used to retreive all the
+        /// stale cache keys before resetting/removing them
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="propertyExpression"></param>
-        public static void SetStaleCacheValidationToken<T>(Expression<Func<T>> propertyExpression)
+        /// <param name="typePropertyExpression"></param>
+        public static void RefreshStaleCacheFor<T>(Expression<Func<T>> typePropertyExpression)
         {
-            var typePath = GetTypePath(propertyExpression);
-            var property = GetMemberInfo(propertyExpression);
+            var property = GetMemberInfo(typePropertyExpression);
+            var typePath = GetTypePath(typePropertyExpression);
             var validationToken = typePath;
 
             if (property == null)
             {
-                if(ValidationCache.Exists(validationToken)) return;
-                ValidationCache.Set(validationToken, true);
+                ResetDependentCaches(validationToken);
                 return;
             }
 
             var propertyReflectedType = property.Member.ReflectedType;
             if (propertyReflectedType == null)
-                throw  new Exception("UTS.Caching SetCacheValidationToken - Invalid property");
-            
+                throw new Exception("UTS.Caching RefreshStaleCacheFor - Invalid property");
+
             var propertyValue = propertyReflectedType.TypeHandle.Value;
 
             validationToken += $"{PropertyDelimiter}{property.Member.Name}" +
                                $"{ValueDelimiter}{propertyValue}";
 
-            if (ValidationCache.Exists(validationToken)) return;
-            ValidationCache.Set(validationToken, true);
+            ResetDependentCaches(validationToken);
         }
+
         /// <summary>
-        /// Inserts the type's fullname as a validation token to mark all related cache items for refresh
+        /// Resets all dependent cache keys rely on the type being passed
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public static void SetStaleCacheValidationToken<T>()
+        public static void RefreshStaleCacheFor<T>()
         {
             var validationToken = typeof(T).FullName;
 
-            if (ValidationCache.Exists(validationToken)) return;
-            ValidationCache.Set(validationToken, true);
+            ResetDependentCaches(validationToken);
         }
 
-        public static string GetTypePath<T>(Expression<Func<T>> property)
+        private static object GetValueFromExpressionArray(IReadOnlyList<string> parameterExpression,
+            object methodInputTargetValue)
         {
-            var expression = GetMemberInfo(property);
-            if (expression.Member.DeclaringType != null)
+            if (parameterExpression.Count <= 1) return methodInputTargetValue;
+
+            for (var i = 1; i < parameterExpression.Count; i++)
             {
-                return expression.Member.DeclaringType.FullName;
+                if (methodInputTargetValue == null) return null;
+
+                methodInputTargetValue = methodInputTargetValue
+                    .GetType()
+                    .GetProperty(parameterExpression[i])
+                    ?.GetValue(methodInputTargetValue);
             }
 
-            return null;
+            return methodInputTargetValue;
+        }
+
+        private static void AddToCacheDependencyList(string validationToken,
+                    string cacheDependencyKey,
+                    CacheType cacheType)
+        {
+            var dependenciesToken = $"{validationToken}";
+
+            if (!ValidationCache.Exists(dependenciesToken))
+            {
+                var cacheDependencyDictionary =
+                    new Dictionary<string, CacheType> { { cacheDependencyKey, cacheType } };
+                ValidationCache.Set(dependenciesToken, cacheDependencyDictionary);
+                return;
+            }
+
+            var currentDependencyDictionary =
+                (Dictionary<string, CacheType>)ValidationCache.Get(dependenciesToken);
+            if (currentDependencyDictionary.ContainsKey(cacheDependencyKey)) return;
+
+            currentDependencyDictionary.Add(cacheDependencyKey, cacheType);
+            ValidationCache.Set(dependenciesToken, currentDependencyDictionary);
+        }
+
+        private static void ResetDependentCaches(string validationToken)
+        {
+            var dependencyCacheList =
+                (Dictionary<string, CacheType>)ValidationCache
+                    .Get($"{validationToken}");
+
+            foreach (var keyCacheTypePair in dependencyCacheList)
+            {
+                Cache.Get(keyCacheTypePair.Value)?.Remove(keyCacheTypePair.Key);
+            }
+        }
+        private static string GetTypePath<T>(Expression<Func<T>> property)
+        {
+            var expression = GetMemberInfo(property);
+            return expression.Member.DeclaringType != null
+                ? expression.Member.DeclaringType.FullName
+                : null;
         }
 
         private static MemberExpression GetMemberInfo(Expression method)
@@ -149,14 +203,15 @@ namespace Amibou.Infrastructure.Caching
 
             MemberExpression memberExpr = null;
 
-            if (lambda.Body.NodeType == ExpressionType.Convert)
+            switch (lambda.Body.NodeType)
             {
-                memberExpr =
-                    ((UnaryExpression)lambda.Body).Operand as MemberExpression;
-            }
-            else if (lambda.Body.NodeType == ExpressionType.MemberAccess)
-            {
-                memberExpr = lambda.Body as MemberExpression;
+                case ExpressionType.Convert:
+                    memberExpr =
+                        ((UnaryExpression)lambda.Body).Operand as MemberExpression;
+                    break;
+                case ExpressionType.MemberAccess:
+                    memberExpr = lambda.Body as MemberExpression;
+                    break;
             }
 
             if (memberExpr == null)

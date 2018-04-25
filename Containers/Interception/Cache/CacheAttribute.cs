@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Amibou.Infrastructure.Containers.Interception.Cache;
 using Amibou.Infrastructure.Serialization;
-using Amibou.Infrastructure.Containers.Interception.Cache;
-using Microsoft.Practices.Unity.InterceptionExtension;
 using Microsoft.Practices.Unity;
+using Microsoft.Practices.Unity.InterceptionExtension;
+using System;
 using System.Collections.Generic;
 using static Amibou.Infrastructure.Utilities.Utilities;
 

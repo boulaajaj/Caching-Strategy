@@ -1,12 +1,11 @@
-﻿using Microsoft.Practices.Unity.InterceptionExtension;
+﻿using Amibou.Infrastructure.Configuration;
+using Amibou.Infrastructure.Containers.Interception.Cache;
+using Amibou.Infrastructure.Extensions;
+using Amibou.Infrastructure.Serialization;
+using Microsoft.Practices.Unity.InterceptionExtension;
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Containers.Interception.Cache;
-using Amibou.Infrastructure.Extensions;
-using Amibou.Infrastructure.Logging;
-using Amibou.Infrastructure.Serialization;
 
 
 namespace Amibou.Infrastructure.Caching

@@ -1,8 +1,8 @@
+using Amibou.Infrastructure.Extensions;
+using log4net.Config;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using Amibou.Infrastructure.Extensions;
-using log4net.Config;
 
 namespace Amibou.Infrastructure.Logging
 {

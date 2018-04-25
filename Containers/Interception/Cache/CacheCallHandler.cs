@@ -1,14 +1,13 @@
-﻿using System.Reflection;
-using Amibou.Infrastructure.Caching;
+﻿using Amibou.Infrastructure.Caching;
 using Amibou.Infrastructure.Configuration;
+using Amibou.Infrastructure.Instrumentation;
+using Amibou.Infrastructure.Instrumentation.PerformanceCounters;
 using Amibou.Infrastructure.Serialization;
 using Microsoft.Practices.Unity.InterceptionExtension;
-using Amibou.Infrastructure.Instrumentation.PerformanceCounters;
-using Amibou.Infrastructure.Instrumentation;
-using static Amibou.Infrastructure.Caching.CacheValidationHandler;
-using System.Linq;
-using System.Collections.Generic;
 using System;
+using System.Linq;
+using System.Reflection;
+using static Amibou.Infrastructure.Caching.CacheValidationHandler;
 
 namespace Amibou.Infrastructure.Containers.Interception.Cache
 {
@@ -24,6 +23,7 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
 
         public static bool CachesWereReset { get; set; }
 
+        /// <inheritdoc />
         /// <summary>
         /// Returns previously cached response or invokes method and caches response
         /// </summary>
@@ -60,17 +60,8 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
 
             var targetCategory = InstrumentCacheRequest(method);
             var returnType = ((MethodInfo)method.MethodBase).ReturnType;
-            object cachedValue;
 
-            if (IsStale(method, cacheAttribute.EntityChangeTrackingDictionary))
-            {
-                cache.Remove(cacheKey);
-                cachedValue = null;
-            }
-            else
-            {
-                cachedValue = cache.Get(cacheKey);
-            }
+            var cachedValue = cache.Get(cacheKey);
 
             if (cachedValue == null)
             {
@@ -90,6 +81,11 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
                     {
                         cache.Set(cacheKey, cacheValue);
                     }
+
+                    SetupChangeTracking(method
+                        , cacheAttribute.EntityChangeTrackingDictionary
+                        , cacheKey
+                        , cache.CacheType);
                 }
 
                 return methodReturn;

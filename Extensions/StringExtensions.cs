@@ -1,7 +1,4 @@
-﻿using System;
-using System.Globalization;
-
-namespace Amibou.Infrastructure.Extensions
+﻿namespace Amibou.Infrastructure.Extensions
 {
     ///<summary>
     /// Extension methods for the <see cref="string"/> class.

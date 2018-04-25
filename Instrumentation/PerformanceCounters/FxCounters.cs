@@ -1,6 +1,4 @@
 ﻿using Amibou.Infrastructure.Configuration;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Amibou.Infrastructure.Instrumentation.PerformanceCounters
 {

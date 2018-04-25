@@ -1,8 +1,8 @@
-﻿using System.Reflection;
-using System.Text;
+﻿using Amibou.Infrastructure.Configuration;
 using Amibou.Infrastructure.Serialization;
-using Amibou.Infrastructure.Configuration;
 using Microsoft.Practices.Unity.InterceptionExtension;
+using System.Reflection;
+using System.Text;
 
 namespace Amibou.Infrastructure.Extensions
 {

@@ -1,6 +1,5 @@
 ﻿using Enyim.Caching;
 using Enyim.Caching.Memcached;
-using Amibou.Infrastructure.Logging;
 using System;
 
 namespace Amibou.Infrastructure.Caching.Caches

@@ -1,9 +1,8 @@
-﻿using Amibou.Infrastructure.Containers;
-using Amibou.Infrastructure.Logging;
-using System.Linq;
-using System;
+﻿using Amibou.Infrastructure.Caching.Caches;
 using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Caching.Caches;
+using Amibou.Infrastructure.Containers;
+using System;
+using System.Linq;
 
 namespace Amibou.Infrastructure.Caching
 {
@@ -37,5 +36,10 @@ namespace Amibou.Infrastructure.Caching
         public static ICache Disk => Get(CacheType.Disk);
 
         public static ICache Memcached => Get(CacheType.Memcached);
+
+        public static void ResetDependentCache(string validationToken)
+        {
+
+        }
     }
 }
