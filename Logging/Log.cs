@@ -36,7 +36,7 @@ namespace Amibou.Infrastructure.Logging
 
         public static string GetDefaultLoggerName()
         {
-            var logger = ConfigurationManager.AppSettings["UTS.Infrastructure.Logging.LoggerName"];
+            var logger = ConfigurationManager.AppSettings["Amibou.Infrastructure.Logging.LoggerName"];
             return string.IsNullOrEmpty(logger) ? LoggerName.Default : logger;
         }
 

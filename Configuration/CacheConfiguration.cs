@@ -18,13 +18,13 @@ namespace Amibou.Infrastructure.Configuration
         {
             get
             {
-                var current = ConfigurationManager.GetSection("UTS.CacheConfiguration") as CacheConfiguration;
+                var current = ConfigurationManager.GetSection("Amibou.CacheConfiguration") as CacheConfiguration;
                 if (current == null)
                 {
                     current = new CacheConfiguration();
                     if (!_loggedWarning)
                     {
-                        //Log.Warn("Configuration section: <UTS.CacheConfiguration> not specified. Default configuration will be used");
+                        //Log.Warn("Configuration section: <Amibou.CacheConfiguration> not specified. Default configuration will be used");
                         _loggedWarning = true;
                     }
                 }
