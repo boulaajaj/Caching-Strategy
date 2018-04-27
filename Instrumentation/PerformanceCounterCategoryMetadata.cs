@@ -39,7 +39,7 @@ namespace Amibou.Infrastructure.Instrumentation
             Counters = new List<PerformanceCounterMetadata>() { CacheRequests, CacheHits, CacheMisses };
         }
 
-        public const string DefaultName = "UTS Cache";
+        public const string DefaultName = "Amibou Cache";
         public const string DefaultDescription = "Amibou.Infrastructure Cache counters";
     }
 }

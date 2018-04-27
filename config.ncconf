@@ -1,5 +1,5 @@
 <configuration>
-  <cache-config cache-name="UTSCache">
+  <cache-config cache-name="AmibouCache">
     <cache-settings inproc="True">
       <logging enable-logs="True" trace-errors="True" trace-debug="False" log-path=""/>
       <performance-counters enable-counters="True" snmp-port="0"/>

@@ -11,7 +11,7 @@ namespace Amibou.Infrastructure.Configuration
         [ConfigurationProperty(SettingName.InstrumentCacheTargetCounts)]
         public bool InstrumentCacheTargetCounts => (bool)this[SettingName.InstrumentCacheTargetCounts];
 
-        [ConfigurationProperty(SettingName.CategoryNamePrefix, DefaultValue = "UTS Cache")]
+        [ConfigurationProperty(SettingName.CategoryNamePrefix, DefaultValue = "Amibou Cache")]
         public string CategoryNamePrefix => (string)this[SettingName.CategoryNamePrefix];
 
         /// <summary>

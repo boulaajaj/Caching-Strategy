@@ -6,7 +6,7 @@
                  client-request-timeout="90" 
                  connection-timeout="5" port="9800" />
     
-  <cache id="UTSPartitionedCache" 
+  <cache id="PartitionedCache" 
          default-readthru-provider="" 
          default-writethru-provider="" 
          load-balance="False" 

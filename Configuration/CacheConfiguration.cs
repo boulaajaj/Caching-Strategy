@@ -53,7 +53,7 @@ namespace Amibou.Infrastructure.Configuration
         /// <summary>
         /// Returns the configured name of the out-of-process cache
         /// </summary>
-        [ConfigurationProperty(SettingName.DefaultCacheName, DefaultValue = "UTSCache")]
+        [ConfigurationProperty(SettingName.DefaultCacheName, DefaultValue = "AmibouCache")]
         public string DefaultCacheName => (string)this[SettingName.DefaultCacheName];
 
         [ConfigurationProperty(SettingName.DefaultCacheType, DefaultValue = CacheType.Memory)]
