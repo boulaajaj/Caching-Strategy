@@ -15,6 +15,7 @@ namespace Amibou.Infrastructure.Caching
         private const string ValueDelimiter = "=";
 
         private static ICache _trackingContainer;
+
         internal static ICache TrackingContainer 
             => _trackingContainer 
                ?? (_trackingContainer = Cache.Get(CacheType.Memcached));
@@ -23,28 +24,28 @@ namespace Amibou.Infrastructure.Caching
         /// Initiates entity change tracking for the current cache key, cache type and tracking specifications
         /// </summary>
         /// <param name="method">Method being invoked</param>
-        /// <param name="ChangeTrackingDictionary">Tracking specifications</param>
+        /// <param name="changeTrackingDictionary">Tracking specifications</param>
         /// <param name="cacheKey">Cache key</param>
         /// <param name="cacheType">Cache type</param>
         public static void SetupChangeTracking(IMethodInvocation method,
-            Dictionary<Type, KeyValuePair<PropertyInfo, string>> ChangeTrackingDictionary,
+            Dictionary<Type, KeyValuePair<PropertyInfo, string>> changeTrackingDictionary,
             string cacheKey, CacheType cacheType)
         {
             if (string.IsNullOrWhiteSpace(cacheKey))
                 return; //need to log this so we know this weirdness happened
 
-            if (ChangeTrackingDictionary == null ||
-                ChangeTrackingDictionary.Count == 0)
+            if (changeTrackingDictionary == null ||
+                changeTrackingDictionary.Count == 0)
                 return;
 
-            var entityList = ChangeTrackingDictionary.Keys.ToList();
+            var entityList = changeTrackingDictionary.Keys.ToList();
 
             foreach (var entity in entityList)
             {
                 KeyValuePair<PropertyInfo, string> propertyParameterExpressionPair;
                 var trackingToken = entity.FullName;
 
-                ChangeTrackingDictionary.TryGetValue(entity, out propertyParameterExpressionPair);
+                changeTrackingDictionary.TryGetValue(entity, out propertyParameterExpressionPair);
 
                 var property = propertyParameterExpressionPair.Key;
                 var parameterExpression = propertyParameterExpressionPair.Value;
