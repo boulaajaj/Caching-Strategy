@@ -1,8 +1,8 @@
-﻿using Amibou.Infrastructure.Caching.Caches;
+﻿using System;
+using System.Linq;
+using Amibou.Infrastructure.Caching.Caches;
 using Amibou.Infrastructure.Configuration;
 using Amibou.Infrastructure.Containers;
-using System;
-using System.Linq;
 
 namespace Amibou.Infrastructure.Caching
 {

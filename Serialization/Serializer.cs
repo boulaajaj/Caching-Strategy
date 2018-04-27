@@ -1,5 +1,5 @@
-﻿using Amibou.Infrastructure.Containers;
-using System.Linq;
+﻿using System.Linq;
+using Amibou.Infrastructure.Containers;
 
 namespace Amibou.Infrastructure.Serialization
 {

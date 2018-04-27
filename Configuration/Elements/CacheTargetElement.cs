@@ -1,6 +1,6 @@
-﻿using Amibou.Infrastructure.Caching;
+﻿using System.Configuration;
+using Amibou.Infrastructure.Caching;
 using Amibou.Infrastructure.Serialization;
-using System.Configuration;
 
 namespace Amibou.Infrastructure.Configuration
 {
@@ -17,12 +17,11 @@ namespace Amibou.Infrastructure.Configuration
         public string KeyPrefix => (string) this[SettingName.KeyPrefix];
 
         /// <summary>
-        /// Returns the key for the cache target
+        /// Returns change tracking specifications; list of entity types and/or
+        /// entity record criteria
         /// </summary>
-
-
-        [ConfigurationProperty(SettingName.EntityChangeTracking)]
-        public string EntityChangeTracking => (string)this[SettingName.EntityChangeTracking];
+        [ConfigurationProperty(SettingName.ChangeTrackingToken)]
+        public string ChangeTrackingToken => (string)this[SettingName.ChangeTrackingToken];
 
         /// <summary>
         /// Returns whether caching is enabled for the target
@@ -85,7 +84,7 @@ namespace Amibou.Infrastructure.Configuration
             /// <summary>
             /// validationToken
             /// </summary>
-            public const string EntityChangeTracking = "entityChangeTracking";
+            public const string ChangeTrackingToken = "changeTrackingToken";
 
             /// <summary>
             /// enabled

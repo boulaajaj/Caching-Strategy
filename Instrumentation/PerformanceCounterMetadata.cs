@@ -9,9 +9,6 @@ namespace Amibou.Infrastructure.Instrumentation
         public string Description { get; set; }
         public PerformanceCounterType Type { get; set; }
 
-        public string FullName
-        {
-            get { return string.Format("{0}_{1}", Category.Name, Name); }
-        }
+        public string FullName => $"{Category.Name}_{Name}";
     }
 }

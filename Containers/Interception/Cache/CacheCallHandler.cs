@@ -1,13 +1,13 @@
-﻿using Amibou.Infrastructure.Caching;
+﻿using Microsoft.Practices.Unity.InterceptionExtension;
+using System;
+using System.Linq;
+using System.Reflection;
+using Amibou.Infrastructure.Caching;
 using Amibou.Infrastructure.Configuration;
 using Amibou.Infrastructure.Instrumentation;
 using Amibou.Infrastructure.Instrumentation.PerformanceCounters;
 using Amibou.Infrastructure.Serialization;
-using Microsoft.Practices.Unity.InterceptionExtension;
-using System;
-using System.Linq;
-using System.Reflection;
-using static Amibou.Infrastructure.Caching.CacheValidationHandler;
+using static Amibou.Infrastructure.Caching.ChangeTrackingHandler;
 
 namespace Amibou.Infrastructure.Containers.Interception.Cache
 {
@@ -35,8 +35,7 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
             //if caching is disabled, reset all cache and leave:
             if (!CacheConfiguration.Current.Enabled)
             {
-                if (!CachesWereReset) ClearAllCaches();
-                return Proceed(method, getNext);
+                if (!CachesWereReset) ClearAllCaches(); return Proceed(method, getNext);
             }
 
             //get the cache settings from the attribute & config:
@@ -48,15 +47,12 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
             //if method cache disabled, remove data and leave
             if (cacheAttribute.Disabled)
             {
-                cache?.Remove(cacheKey);
-                return Proceed(method, getNext);
+                cache?.Remove(cacheKey); return Proceed(method, getNext);
             }
 
             //if there's no cache provider, leave:
             if (cache == null || cache.CacheType == CacheType.Null || serializer == null)
-            {
                 return Proceed(method, getNext);
-            }
 
             var targetCategory = InstrumentCacheRequest(method);
             var returnType = ((MethodInfo)method.MethodBase).ReturnType;
@@ -66,27 +62,21 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
             if (cachedValue == null)
             {
                 InstrumentCacheMiss(targetCategory, method);
+
                 //call the intended method to set the return value
                 var methodReturn = Proceed(method, getNext);
-                //only cache if we have a real return value & no exception:
-                if (methodReturn != null && methodReturn.ReturnValue != null && methodReturn.Exception == null)
-                {
-                    var cacheValue = serializer.Serialize(methodReturn.ReturnValue);
-                    var lifespan = cacheAttribute.Lifespan;
-                    if (lifespan.TotalSeconds > 0)
-                    {
-                        cache.Set(cacheKey, cacheValue, lifespan);
-                    }
-                    else
-                    {
-                        cache.Set(cacheKey, cacheValue);
-                    }
 
-                    SetupChangeTracking(method
-                        , cacheAttribute.EntityChangeTrackingDictionary
-                        , cacheKey
-                        , cache.CacheType);
-                }
+                //only cache if we have a real return value & no exception:
+                if (methodReturn == null || methodReturn.ReturnValue == null ||
+                    methodReturn.Exception != null)
+                    return methodReturn;
+
+                cachedValue = serializer.Serialize(methodReturn.ReturnValue);
+
+                StoreCacheValue(cache, cacheKey, cachedValue, cacheAttribute.Lifespan);
+
+                SetupChangeTracking(method, cacheAttribute.ChangeTrackingDictionary
+                    , cacheKey, cache.CacheType);
 
                 return methodReturn;
             }
@@ -98,14 +88,23 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
             return method.CreateMethodReturn(returnValue);
         }
 
+        private static void StoreCacheValue(ICache cache, string cacheKey
+            , object cachedValue, TimeSpan lifespan)
+        {
+            if (lifespan.TotalSeconds > 0)
+            {
+                cache.Set(cacheKey, cachedValue, lifespan); return;
+            }
+            cache.Set(cacheKey, cachedValue);
+        }
+
         public void ClearAllCaches()
         {
             var allCacheTypes = Enum.GetValues(typeof(CacheType)).Cast<CacheType>();
 
             foreach (var cacheType in allCacheTypes)
-            {
                 Caching.Cache.Get(cacheType).Reset();
-            }
+            
             CachesWereReset = true;
         }
 
@@ -140,16 +139,16 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
             {
                 PerformanceCounter.IncrementCount(FxCounters.CacheTotal.CacheRequests);
             }
-            if (CacheConfiguration.Current.PerformanceCounters.InstrumentCacheTargetCounts)
+
+            if (!CacheConfiguration.Current.PerformanceCounters.InstrumentCacheTargetCounts) return category;
+
+            var cacheKey = CacheKeyBuilder.GetCacheKeyPrefix(input);
+            category = new PerformanceCounterCategoryMetadata()
             {
-                var cacheKey = CacheKeyBuilder.GetCacheKeyPrefix(input);
-                category = new PerformanceCounterCategoryMetadata()
-                {
-                    Name = CacheConfiguration.Current.PerformanceCounters.CategoryNamePrefix + " - " + cacheKey,
-                    Description = PerformanceCounterCategoryMetadata.DefaultDescription
-                };
-                PerformanceCounter.IncrementCount(category.CacheRequests);
-            }
+                Name = CacheConfiguration.Current.PerformanceCounters.CategoryNamePrefix + " - " + cacheKey,
+                Description = PerformanceCounterCategoryMetadata.DefaultDescription
+            };
+            PerformanceCounter.IncrementCount(category.CacheRequests);
             return category;
         }
 
@@ -163,7 +162,7 @@ namespace Amibou.Infrastructure.Containers.Interception.Cache
             if (targetConfig != null)
             {
                 cacheAttribute.Disabled = !targetConfig.Enabled;
-                cacheAttribute.EntityCahngeTrackingToken = targetConfig.EntityChangeTracking;
+                cacheAttribute.ChangeTrackingToken = targetConfig.ChangeTrackingToken;
                 cacheAttribute.Days = targetConfig.Days;
                 cacheAttribute.Hours = targetConfig.Hours;
                 cacheAttribute.Minutes = targetConfig.Minutes;

@@ -1,8 +1,8 @@
-﻿using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Serialization;
-using Microsoft.Practices.Unity.InterceptionExtension;
+﻿using Microsoft.Practices.Unity.InterceptionExtension;
 using System.Reflection;
 using System.Text;
+using Amibou.Infrastructure.Configuration;
+using Amibou.Infrastructure.Serialization;
 
 namespace Amibou.Infrastructure.Extensions
 {
@@ -72,7 +72,7 @@ namespace Amibou.Infrastructure.Extensions
         /// <param name="input"></param>
         /// <returns></returns>
         public static string GetMethodCallPrefix(this IMethodInvocation input) 
-            => string.Format("{0}.{1} ", input.Target.GetType().BaseType.Name, input.MethodBase.Name);
+            => $"{input.Target.GetType().BaseType.Name}.{input.MethodBase.Name} ";
 
         private static void BuildArgumentsString(StringBuilder callBuilder, IMethodInvocation input, 
                                                  ISerializer argumentSerializer, bool includeParameterNames, 

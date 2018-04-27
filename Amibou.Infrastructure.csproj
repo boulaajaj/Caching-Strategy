@@ -152,7 +152,7 @@
     <Compile Include="Containers\Container.cs" />
     <Compile Include="Containers\Interception\Cache\CacheAttribute.cs" />
     <Compile Include="Containers\Interception\Cache\CacheCallHandler.cs" />
-    <Compile Include="Caching\CacheValidationHandler.cs" />
+    <Compile Include="Caching\ChangeTracking.cs" />
     <Compile Include="Containers\Interception\Cache\ICacheKeyPrefixProvider.cs" />
     <Compile Include="Containers\Lifetime\Lifetime.cs" />
     <Compile Include="Containers\Lifetime\PerCallContextLifetimeManager.cs" />
@@ -176,7 +176,7 @@
     <Compile Include="Serialization\Serializers\BinarySerializer.cs" />
     <Compile Include="Serialization\Serializers\JsonSerializer.cs" />
     <Compile Include="Serialization\Serializers\XmlSerializer.cs" />
-    <Compile Include="Utilities\Utilities.cs" />
+    <Compile Include="Utilities\ReflectionHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="client.ncconf">
@@ -187,6 +187,7 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

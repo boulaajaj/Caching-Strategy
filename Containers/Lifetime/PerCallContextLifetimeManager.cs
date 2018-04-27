@@ -14,7 +14,7 @@ namespace Amibou.Infrastructure.Containers
     /// </remarks>
     public class PerCallContextLifeTimeManager : LifetimeManager
     {
-        private readonly string _key = string.Format("PerCallContextLifeTimeManager_{0}", Guid.NewGuid());
+        private readonly string _key = $"PerCallContextLifeTimeManager_{Guid.NewGuid()}";
 
         /// <summary>
         /// Gets the object from <see cref="CallContext"/>

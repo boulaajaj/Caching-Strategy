@@ -1,10 +1,10 @@
-﻿using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Cryptography;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Amibou.Infrastructure.Configuration;
+using Amibou.Infrastructure.Cryptography;
 
 namespace Amibou.Infrastructure.Caching.Caches
 {
@@ -13,7 +13,6 @@ namespace Amibou.Infrastructure.Caching.Caches
         private string _directory;
         private bool _directoryValid = true;
         private bool _initialised;
-        private List<string> _allKeys;
 
         public override CacheType CacheType => CacheType.Disk;
 
@@ -104,51 +103,51 @@ namespace Amibou.Infrastructure.Caching.Caches
             object value = null;
             try
             {
-                if (_directoryValid)
+                if (!_directoryValid) return null;
+
+                //check for a non-expiring cache:
+                var cachePath = GetFilePath(key);
+                if (!File.Exists(cachePath))
                 {
-                    //check for a non-expiring cache:
-                    var cachePath = GetFilePath(key);
-                    if (!File.Exists(cachePath))
+                    cachePath = null;
+                    //check for expired caches:
+                    var fileName = GetFileNameSearchPattern(key);
+                    var existingCaches = Directory.EnumerateFiles(_directory, fileName).OrderByDescending(x => x);
+                    if (existingCaches.Count() > 0)
                     {
-                        cachePath = null;
-                        //check for expired caches:
-                        var fileName = GetFileNameSearchPattern(key);
-                        var existingCaches = Directory.EnumerateFiles(_directory, fileName).OrderByDescending(x => x);
-                        if (existingCaches.Count() > 0)
+                        var mostRecentCache = existingCaches.ElementAt(0);
+                        //if the most recent cache is live, return it -
+                        //format is {key}.cache.{expiresAt}.expiry
+                        if (mostRecentCache.EndsWith(".expiry"))
                         {
-                            var mostRecentCache = existingCaches.ElementAt(0);
-                            //if the most recent cache is live, return it -
-                            //format is {key}.cache.{expiresAt}.expiry
-                            if (mostRecentCache.EndsWith(".expiry"))
+                            var expiresAt = mostRecentCache.Substring(mostRecentCache.IndexOf(".expiry") - 19, 19);
+                            var expiresAtDate = expiresAt.Replace('-', '/').Replace('_', ':');
+                            var expiryDate = DateTime.Parse(expiresAtDate);
+                            if (expiryDate > DateTime.UtcNow)
                             {
-                                var expiresAt = mostRecentCache.Substring(mostRecentCache.IndexOf(".expiry") - 19, 19);
-                                var expiresAtDate = expiresAt.Replace('-', '/').Replace('_', ':');
-                                var expiryDate = DateTime.Parse(expiresAtDate);
-                                if (expiryDate > DateTime.UtcNow)
-                                {
-                                    cachePath = Path.Combine(_directory, mostRecentCache);
-                                }
-                                else
-                                {
-                                    var deleteKey = key;
-                                    Task.Factory.StartNew(() => DeleteFile(deleteKey));
-                                }
+                                cachePath = Path.Combine(_directory, mostRecentCache);
+                            }
+                            else
+                            {
+                                var deleteKey = key;
+                                Task.Factory.StartNew(() => DeleteFile(deleteKey));
                             }
                         }
                     }
-                    if (cachePath != null)
+                }
+                if (cachePath != null)
+                {
+                    if (CacheConfiguration.Current.DiskCache.EncryptItems)
                     {
-                        if (CacheConfiguration.Current.DiskCache.EncryptItems)
-                        {
-                            var encryptedBytes = File.ReadAllBytes(cachePath);
-                            value = SimpleAes.Decrypt(encryptedBytes);
-                        }
-                        else
-                        {
-                            value = File.ReadAllText(cachePath);
-                        }
+                        var encryptedBytes = File.ReadAllBytes(cachePath);
+                        value = SimpleAes.Decrypt(encryptedBytes);
+                    }
+                    else
+                    {
+                        value = File.ReadAllText(cachePath);
                     }
                 }
+
             }
             catch (Exception ex)
             {
@@ -166,11 +165,11 @@ namespace Amibou.Infrastructure.Caching.Caches
         {
             var root = new DirectoryInfo(_directory);
 
-            foreach (var file in root.EnumerateFiles())
+            foreach (FileInfo file in root.EnumerateFiles())
             {
                 file.Delete();
             }
-            foreach (var dir in root.EnumerateDirectories())
+            foreach (DirectoryInfo dir in root.EnumerateDirectories())
             {
                 dir.Delete(true);
             }
@@ -231,7 +230,7 @@ namespace Amibou.Infrastructure.Caching.Caches
             var path = GetFilePath(cacheKey);
             if (expiresAt.HasValue)
             {
-                path = string.Format("{0}.{1}.expiry", path, expiresAt.Value.ToString("yyyy-MM-ddTHH_mm_ss"));
+                path = $"{path}.{expiresAt.Value:yyyy-MM-ddTHH_mm_ss}.expiry";
             }
             return path;
         }

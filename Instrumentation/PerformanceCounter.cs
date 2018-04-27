@@ -56,7 +56,7 @@ namespace Amibou.Infrastructure.Instrumentation
             {
                 if (!PerformanceCounterCategory.Exists(category.Name))
                 {
-                    var counterCollection = new CounterCreationDataCollection();
+                    CounterCreationDataCollection counterCollection = new CounterCreationDataCollection();
                     foreach (var description in category.Counters)
                     {
                         var counter = new CounterCreationData();

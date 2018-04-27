@@ -1,6 +1,4 @@
-﻿using Amibou.Infrastructure.Caching;
-using Amibou.Infrastructure.Serialization;
-using Microsoft.Practices.Unity;
+﻿using Microsoft.Practices.Unity;
 using Microsoft.Practices.Unity.Configuration;
 using Microsoft.Practices.Unity.InterceptionExtension;
 using System;
@@ -8,6 +6,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Reflection;
+using Amibou.Infrastructure.Caching;
+using Amibou.Infrastructure.Serialization;
 using unity = Microsoft.Practices.Unity;
 
 namespace Amibou.Infrastructure.Containers
@@ -41,7 +41,7 @@ namespace Amibou.Infrastructure.Containers
             RegisterAll<ICache>(thisAssembly, Lifetime.Singleton);
             RegisterAll<ISerializer>(thisAssembly, Lifetime.Singleton);
             //Register<Type>(Lifetime.Singleton);
-            Register<Utilities.Utilities>(Lifetime.Singleton);
+            Register<Utilities.ReflectionHelpers>(Lifetime.Singleton);
         }
 
         /// <summary>

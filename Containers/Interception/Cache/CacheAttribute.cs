@@ -1,10 +1,11 @@
-﻿using Amibou.Infrastructure.Containers.Interception.Cache;
-using Amibou.Infrastructure.Serialization;
-using Microsoft.Practices.Unity;
+﻿using Microsoft.Practices.Unity;
 using Microsoft.Practices.Unity.InterceptionExtension;
 using System;
 using System.Collections.Generic;
-using static Amibou.Infrastructure.Utilities.Utilities;
+using System.Reflection;
+using Amibou.Infrastructure.Containers.Interception.Cache;
+using Amibou.Infrastructure.Serialization;
+using Amibou.Infrastructure.Utilities;
 
 namespace Amibou.Infrastructure.Caching
 {
@@ -20,37 +21,50 @@ namespace Amibou.Infrastructure.Caching
     public sealed class CacheAttribute : HandlerAttribute
     {
         /// <summary>
-        /// A list of entity types associated with a string that represents the name of the unique identifier of the
-        /// entity record; if the string is null,, the cache will become invalid everytime a record is deleted or added 
+        /// A parsed dictionary of change tracking specifications; types plus optional property criteria
         /// </summary>
-        public Dictionary<Type, KeyValuePair<string, string>> EntityChangeTrackingDictionary
+        public Dictionary<Type, KeyValuePair<PropertyInfo, string>> ChangeTrackingDictionary
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(EntityCahngeTrackingToken))
+                if (string.IsNullOrWhiteSpace(ChangeTrackingToken))
                     return null;
 
-                var entitySpecs = EntityCahngeTrackingToken.Split(',');
-                var entityChangeTrackingDictionary = new Dictionary<Type, KeyValuePair<string, string>>();
+                var entitySpecs = ChangeTrackingToken.Split(',');
+                var changeTrackingDictionary = new Dictionary<Type, KeyValuePair<PropertyInfo, string>>();
                 foreach (var entitySpec in entitySpecs)
                 {
-                    var entityProperty = entitySpec.Split(':');
-                    var entityName = Instance.GetTypeFromAppDomain(entityProperty[0].Trim());
-                    var entityPropertyArray = entityProperty.Length > 1 ? entityProperty[1].Trim().Split('=') : null;
+                    var entityPropertyPair = entitySpec.Split(':');
+                    var entityType = ReflectionHelpers.Instance
+                        .GetTypeFromAppDomain(entityPropertyPair[0].Trim());
 
-                    if (entityName != null)
-                        entityChangeTrackingDictionary
-                            .Add(entityName
-                                , entityPropertyArray != null 
-                                    ? new KeyValuePair<string, string>(entityPropertyArray[0], entityPropertyArray[1]) 
-                                    : new KeyValuePair<string, string>(null, null));
+                    PropertyInfo proprety = null;
+                    var parameterExpression = string.Empty;
+
+                    if (entityPropertyPair.Length == 2)
+                    {
+                        var propertyParameterExpressionPair = entityPropertyPair[1].Trim().Split('=');
+                        if (propertyParameterExpressionPair.Length == 2 && entityType != null)
+                        {
+                            proprety = entityType.GetProperty(propertyParameterExpressionPair[0]);
+                            parameterExpression = propertyParameterExpressionPair[1];
+                        }
+                    }
+
+                    if (entityType != null)
+                        changeTrackingDictionary
+                            .Add(entityType
+                                , proprety != null && string.IsNullOrWhiteSpace(parameterExpression)
+                                    ? new KeyValuePair<PropertyInfo, string>(proprety, parameterExpression) 
+                                    : new KeyValuePair<PropertyInfo, string>()
+                                );
                 }
 
-                return entityChangeTrackingDictionary;
+                return changeTrackingDictionary;
             }
         }
 
-        public string EntityCahngeTrackingToken { get; set; }
+        public string ChangeTrackingToken { get; set; }
 
         /// <summary>
         /// Lifespan of the response in the cache

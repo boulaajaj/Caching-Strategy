@@ -1,7 +1,7 @@
 ﻿using Alachisoft.NCache.Runtime;
 using Alachisoft.NCache.Web.Caching;
-using Amibou.Infrastructure.Configuration;
 using System;
+using Amibou.Infrastructure.Configuration;
 
 namespace Amibou.Infrastructure.Caching.Caches
 {

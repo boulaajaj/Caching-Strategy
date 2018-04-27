@@ -1,11 +1,11 @@
-﻿using Amibou.Infrastructure.Configuration;
-using Amibou.Infrastructure.Containers.Interception.Cache;
-using Amibou.Infrastructure.Extensions;
-using Amibou.Infrastructure.Serialization;
-using Microsoft.Practices.Unity.InterceptionExtension;
+﻿using Microsoft.Practices.Unity.InterceptionExtension;
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using Amibou.Infrastructure.Configuration;
+using Amibou.Infrastructure.Containers.Interception.Cache;
+using Amibou.Infrastructure.Extensions;
+using Amibou.Infrastructure.Serialization;
 
 
 namespace Amibou.Infrastructure.Caching
@@ -58,7 +58,7 @@ namespace Amibou.Infrastructure.Caching
             var hashedKey = HashCacheKey(key);
             if (!CacheConfiguration.Current.HashPrefixInCacheKey)
             {
-                hashedKey = string.Format("{0}_{1}", prefix, hashedKey);
+                hashedKey = $"{prefix}_{hashedKey}";
             }
             //Log.Debug("CacheKeyBuilder.GetCacheKey - returned {0}", hashedKey);
             return hashedKey;

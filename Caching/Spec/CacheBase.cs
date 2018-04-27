@@ -1,7 +1,7 @@
-﻿using Amibou.Infrastructure.Caching.Caches;
-using Amibou.Infrastructure.Serialization;
-using System;
+﻿using System;
 using System.Web.Caching;
+using Amibou.Infrastructure.Caching.Caches;
+using Amibou.Infrastructure.Serialization;
 
 namespace Amibou.Infrastructure.Caching
 {
